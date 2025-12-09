@@ -9,7 +9,7 @@ interface ApiResponse<T> {
     data: T;
 }
 
-class ApiResponse<T> {
+class Apiclient {
     private baseUrl: string;
 
     constructor(baseUrl: string) {
@@ -82,4 +82,26 @@ class ApiResponse<T> {
 
         return this.handleResponse(response);
     }
+
+    async patch<T>(endpoint: string, data:any): Promise<T> {
+        const response = await fetch(`${this.baseUrl}${endpoint}`, {
+            method: "PATCH",
+            headers: this.getAuthHeaders(),
+            body: data ? JSON.stringify(data): undefined
+        });
+
+        return this.handleResponse(response);
+    }
+
+    async delete<T>(endpoint: string, data:any): Promise<T> {
+        const response = await fetch(`${this.baseUrl}${endpoint}`, {
+            method: "DELETE",
+            headers: this.getAuthHeaders(),
+            body: data ? JSON.stringify(data): undefined
+        });
+
+        return this.handleResponse(response);
+    }
 }
+
+export const apiclient = new Apiclient(API_BASE_URL);
