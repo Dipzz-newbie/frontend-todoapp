@@ -72,4 +72,14 @@ class ApiResponse<T> {
 
         return this.handleResponse<T>(response);
     }
+
+    async post<T>(endpoint: string, data: any): Promise<T> {
+        const response = await fetch(`${this.baseUrl}${endpoint}`, {
+            method: "POST",
+            headers: this.getAuthHeaders(),
+            body: data ? JSON.stringify(data): undefined
+        });
+
+        return this.handleResponse(response);
+    }
 }
