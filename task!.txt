@@ -1,0 +1,5 @@
+1. buat form edit di setting untuk ganti nama, password, dan avatar user
+2. buat agar user pas mau bikin akun bisa isi nama di register
+3. buat desc untuk task apa aja yang user isi kan ( semisal user isi task nah itu juga harus ada desc di bawah dari task utama itu)
+4. kalo bisa buat field update di setiap kali mau melakukan pengubahan data, lebih ke arah user interactive
+5. inget kalo semua ini cuma project pribadi dan skala nya kecil

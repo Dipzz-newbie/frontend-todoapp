@@ -1,0 +1,218 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    /* Neutral grayscale palette */
+    --background: 0 0% 97.3%; /* #f8f9fa */
+    --foreground: 0 0% 12.9%; /* #212529 */
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 12.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 12.9%;
+
+    --primary: 0 0% 20.4%; /* #343a40 */
+    --primary-foreground: 0 0% 97.3%;
+
+    --secondary: 0 0% 91.4%; /* #e9ecef */
+    --secondary-foreground: 0 0% 20.4%;
+
+    --muted: 0 0% 87.1%; /* #dee2e6 */
+    --muted-foreground: 0 0% 42.4%; /* #6c757d */
+
+    --accent: 0 0% 80.8%; /* #ced4da */
+    --accent-foreground: 0 0% 12.9%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 87.1%;
+    --input: 0 0% 87.1%;
+    --ring: 0 0% 42.4%;
+
+    --radius: 0.75rem;
+
+    --task-bg: 0 0% 100%;
+    --task-hover: 0 0% 97.3%;
+    --task-border: 0 0% 87.1%;
+    
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .dark {
+    --background: 0 0% 12.9%; /* #212529 */
+    --foreground: 0 0% 97.3%;
+
+    --card: 0 0% 20.4%; /* #343a40 */
+    --card-foreground: 0 0% 97.3%;
+
+    --popover: 0 0% 20.4%;
+    --popover-foreground: 0 0% 97.3%;
+
+    --primary: 0 0% 97.3%;
+    --primary-foreground: 0 0% 12.9%;
+
+    --secondary: 0 0% 28.6%; /* #495057 */
+    --secondary-foreground: 0 0% 97.3%;
+
+    --muted: 0 0% 28.6%;
+    --muted-foreground: 0 0% 67.8%; /* #adb5bd */
+
+    --accent: 0 0% 42.4%; /* #6c757d */
+    --accent-foreground: 0 0% 97.3%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 97.3%;
+
+    --border: 0 0% 28.6%;
+    --input: 0 0% 28.6%;
+    --ring: 0 0% 67.8%;
+
+    --task-bg: 0 0% 20.4%;
+    --task-hover: 0 0% 24%;
+    --task-border: 0 0% 28.6%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-poppins;
+  }
+
+  h1, h2 {
+    @apply font-semibold;
+  }
+
+  h3, h4, h5, h6 {
+    @apply font-medium;
+  }
+
+  p, span, div {
+    @apply font-normal;
+  }
+
+  .caption, small, .text-xs {
+    @apply font-light;
+  }
+}
+
+@layer utilities {
+  .animate-greeting-in {
+    animation: greetingFadeIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  @keyframes greetingFadeIn {
+    0% {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Page transition */
+  .page-enter {
+    animation: pageSlideIn 0.35s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  }
+
+  @keyframes pageSlideIn {
+    0% {
+      opacity: 0;
+      transform: translateX(30px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  /* Floating button animation */
+  .fab-enter {
+    animation: fabEnter 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+    animation-delay: 0.3s;
+    opacity: 0;
+  }
+
+  @keyframes fabEnter {
+    0% {
+      opacity: 0;
+      transform: translateY(20px) scale(0.8);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  /* Stagger animation for cards */
+  .stagger-item {
+    opacity: 0;
+    animation: staggerFadeIn 0.4s ease-out forwards;
+  }
+
+  @keyframes staggerFadeIn {
+    0% {
+      opacity: 0;
+      transform: translateY(15px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Card interactions */
+  .card-interactive {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .card-interactive:hover {
+    transform: translateY(-2px) scale(1.02);
+  }
+
+  .card-interactive:active {
+    transform: scale(0.97);
+  }
+
+  /* Input focus glow */
+  .input-glow:focus {
+    box-shadow: 0 0 0 3px hsl(var(--ring) / 0.2);
+    transition: box-shadow 0.2s ease;
+  }
+
+  /* Error shake animation */
+  .error-shake {
+    animation: errorShake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+  }
+
+  @keyframes errorShake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-3px); }
+    20%, 40%, 60%, 80% { transform: translateX(3px); }
+  }
+
+  /* Responsive: reduce animations on mobile */
+  @media (prefers-reduced-motion: reduce) {
+    .animate-greeting-in,
+    .page-enter,
+    .fab-enter,
+    .stagger-item,
+    .card-interactive {
+      animation: none !important;
+      transition: none !important;
+    }
+  }
+}
