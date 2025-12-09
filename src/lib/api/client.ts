@@ -1,6 +1,5 @@
-import { env } from "process";
 
-const API_BASE_URL = process.env.API_BASE_URL
+const API_BASE_URL = process.env.API_BASE_URL;
 
 interface ApiError {
     errors: string
@@ -41,11 +40,36 @@ class ApiResponse<T> {
             throw new Error(`HTTP Error: ${response.status}`);
         }
 
-        if(contentType?.includes("application/json")) {
+        if (contentType?.includes("application/json")) {
             const json: ApiResponse<T> = await response.json();
             return json.data
         }
 
         return {} as T;
+    }
+
+    async get<T>(endpoint: string, params?: Record<string, any>): Promise<T> {
+        let url = `${this.baseUrl}${endpoint}`;
+
+        if (params) {
+            const queryString = new URLSearchParams(
+                Object.entries(params).reduce((acc, [key, value]) => {
+                    if (value !== undefined && value !== null) {
+                        acc[key] = String(value);
+                    }return acc;
+                }, {} as Record<string, string>)
+            ).toString();
+
+            if(queryString) {
+                url += `?${queryString}`;
+            }
+        }
+
+        const response = await fetch(url, {
+            method: "GET",
+            headers: this.getAuthHeaders(),
+        });
+
+        return this.handleResponse<T>(response);
     }
 }
