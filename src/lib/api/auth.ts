@@ -1,5 +1,5 @@
 import { apiClient } from "./client"
-import { LoginRequest, RefreshTokenResponse, RegisterRequest, UserResponse } from "@/models/auth-interfaces"
+import { LoginRequest, RefreshTokenResponse, RegisterRequest, UserResponse } from "@/models/userAuth-interfaces"
 
 export const authApi = {
 

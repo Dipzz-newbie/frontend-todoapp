@@ -1,5 +1,5 @@
 import { apiClient } from "./client";
-import { UpdateUserRequest, UserResponse } from "@/models/auth-interfaces";
+import { UpdateUserRequest, UserResponse } from "@/models/userAuth-interfaces";
 
 export const userAPi = {
     async getCurrentUser(): Promise<UserResponse> {
