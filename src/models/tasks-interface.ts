@@ -17,5 +17,20 @@ export interface UpdateTaskRequest {
     desc?:string;
 }
 
+export interface SearchTaskRequest {
+    title?: string;
+    createdAt?: string;
+    updateAt?: string;
+    page?: number;
+    size?:number;
+}
 
+export interface SearchTaskResponse {
+    data: TaskResponse[],
+    paging: {
+        current_page: number,
+        total_page: number,
+        size: number
+    }
+}
 
