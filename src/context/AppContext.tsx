@@ -16,16 +16,13 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export const AppProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
-  const [tasks, setTasks] = useState<Task[]>(() => {
-    const saved = localStorage.getItem("tasks");
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [darkMode, setDarkMode] = useState(() => {
     const saved = localStorage.getItem("darkMode");
     return saved ? JSON.parse(saved) : false;
   });
-  const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<any>(null);
+  const [session, setSession] = useState<any>(null);
   const [profilePicture, setProfilePicture] = useState<string>(() => {
     const saved = localStorage.getItem("profilePicture");
     return saved || "";
@@ -45,8 +42,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
   });
 
   // Authentication effect
-  useEffect(() => {
-    const checkAuth = async () => {
+  const checkAuth = async () => {
       if (authApi.isAuthenticated()) {
         try {
           const userData = await userAPi.getCurrentUser();
@@ -57,14 +53,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
             setProfilePicture(userData.avatarUrl);
           }
         } catch (err) {
-          console.log(err)
+          console.log(err);
 
-          try{
+          try {
             await authApi.refreshToken();
             const userData = await userAPi.getCurrentUser();
             setUser(userData);
             setSession({ user: userData });
-          }catch(refreshError) {
+          } catch (refreshError) {
             await authApi.logout();
             setUser(null);
             setSession(null);
@@ -72,12 +68,27 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
         }
       }
     };
-  }, []);
 
-  // Save tasks to localStorage
+     // Fetch tasks when user is authenticated
+    const fetchTask = async() => {
+      if(user) {
+        try{
+          const apiTask = await taskApi.getTask();
+          const convertedTask = apiTask.map(convertApiTask);
+          setTasks(convertedTask);
+        }catch(err) {
+          console.log("Failed to fetch tasks: ", err);
+        }
+      }
+    }
+
   useEffect(() => {
-    localStorage.setItem("tasks", JSON.stringify(tasks));
-  }, [tasks]);
+    checkAuth();
+  }, []);
+  
+  useEffect(() => {
+    fetchTask();
+  }, [user]);
 
   // Dark mode effect
   useEffect(() => {
