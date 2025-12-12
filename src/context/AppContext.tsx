@@ -6,8 +6,10 @@ import React, {
   useEffect,
 } from "react";
 import { AppContextType, Task, ThemeColors } from "@/types";
-import { supabase } from "@/integrations/supabase/client";
-import { User, Session } from "@supabase/supabase-js";
+import { authApi } from "@/lib/api/auth";
+import { userAPi } from "@/lib/api/user";
+import { taskApi } from "@/lib/api/task";
+import { TaskResponse } from "@/models/tasks-interface";
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -33,23 +35,43 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     return saved || "";
   });
 
+  const convertApiTask = (apiTask: TaskResponse): Task => ({
+    id: apiTask.id,
+    title: apiTask.title,
+    desc: apiTask.desc,
+    completed: apiTask.complatedAt,
+    createdAt: new Date(apiTask.createdAt).getTime(),
+    updatedAt: new Date(apiTask.updatedAt).getTime(),
+  });
+
   // Authentication effect
   useEffect(() => {
-    // Set up auth state listener
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-    });
+    const checkAuth = async () => {
+      if (authApi.isAuthenticated()) {
+        try {
+          const userData = await userAPi.getCurrentUser();
+          setUser(userData);
+          setSession({ user: userData });
+          setDisplayName(userData.name);
+          if (userData.avatarUrl) {
+            setProfilePicture(userData.avatarUrl);
+          }
+        } catch (err) {
+          console.log(err)
 
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-    });
-
-    return () => subscription.unsubscribe();
+          try{
+            await authApi.refreshToken();
+            const userData = await userAPi.getCurrentUser();
+            setUser(userData);
+            setSession({ user: userData });
+          }catch(refreshError) {
+            await authApi.logout();
+            setUser(null);
+            setSession(null);
+          }
+        }
+      }
+    };
   }, []);
 
   // Save tasks to localStorage

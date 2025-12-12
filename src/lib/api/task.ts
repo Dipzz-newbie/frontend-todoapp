@@ -2,11 +2,11 @@ import { CreateTaskRequest, SearchTaskRequest, SearchTaskResponse, TaskResponse,
 import { apiClient } from "./client";
 
 
-export const tasksApi = {
+export const taskApi = {
     async createTask(data: CreateTaskRequest): Promise<TaskResponse> {
         return apiClient.post<TaskResponse>("/api/users/tasks", data)
     },
-    
+
     async getTask(): Promise<TaskResponse[]> {
         return apiClient.get<TaskResponse[]>("/api/users/tasks")
     },
@@ -19,8 +19,8 @@ export const tasksApi = {
         return apiClient.patch<TaskResponse>(`/api/users/tasks/${taskId}`, data)
     },
 
-    async deleteTask(taskId: string): Promise<{message: string}> {
-        return apiClient.delete<{message: string}>(`/api/users/tasks/${taskId}`)
+    async deleteTask(taskId: string): Promise<{ message: string }> {
+        return apiClient.delete<{ message: string }>(`/api/users/tasks/${taskId}`)
     },
 
     async searchTasks(params: SearchTaskRequest): Promise<SearchTaskResponse> {
