@@ -121,8 +121,10 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-    // Clear profile data on sign out
+    await authApi.logout();
+    setUser(null);
+    setSession(null);
+    setTasks([]);
     setProfilePicture("");
     setDisplayName("");
     localStorage.removeItem("profilePicture");
