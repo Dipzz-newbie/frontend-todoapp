@@ -7,9 +7,9 @@ import React, {
 } from "react";
 import { AppContextType, Task, ThemeColors } from "@/types";
 import { authApi } from "@/lib/api/auth";
-import { userAPi } from "@/lib/api/user";
+import { userApi } from "@/lib/api/user";
 import { taskApi } from "@/lib/api/task";
-import { TaskResponse } from "@/models/tasks-interface";
+import { TaskResponse } from "@/types/tasks-interface";
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
@@ -45,7 +45,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
   const checkAuth = async () => {
       if (authApi.isAuthenticated()) {
         try {
-          const userData = await userAPi.getCurrentUser();
+          const userData = await userApi.getCurrentUser();
           setUser(userData);
           setSession({ user: userData });
           setDisplayName(userData.name);
@@ -57,7 +57,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
 
           try {
             await authApi.refreshToken();
-            const userData = await userAPi.getCurrentUser();
+            const userData = await userApi.getCurrentUser();
             setUser(userData);
             setSession({ user: userData });
           } catch (refreshError) {
@@ -141,7 +141,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
         setDarkMode,
         theme,
         user,
+        setUser,
         session,
+        setSession,
         signOut,
         profilePicture,
         setProfilePicture,

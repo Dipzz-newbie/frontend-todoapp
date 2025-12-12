@@ -1,4 +1,4 @@
-import { CreateTaskRequest, SearchTaskRequest, SearchTaskResponse, TaskResponse, UpdateTaskRequest } from "@/models/tasks-interface";
+import { CreateTaskRequest, SearchTaskRequest, SearchTaskResponse, TaskResponse, UpdateTaskRequest } from "@/types/tasks-interface";
 import { apiClient } from "./client";
 
 

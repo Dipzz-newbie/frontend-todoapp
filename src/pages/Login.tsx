@@ -1,26 +1,41 @@
+// src/pages/Login.tsx
+
 import React, { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { authApi } from '@/lib/api/auth';
+import { userApi } from '@/lib/api/user';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { LogIn } from 'lucide-react';
 import { Link } from '@/components/Link';
+import { useApp } from '@/context/AppContext';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { setUser, setSession } = useApp();
 
   useEffect(() => {
     // Check if user is already logged in
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        window.location.hash = '/';
+    const checkAuth = async () => {
+      if (authApi.isAuthenticated()) {
+        try {
+          const userData = await userApi.getCurrentUser();
+          setUser(userData);
+          setSession({ user: userData });
+          window.location.hash = '/';
+        } catch (error) {
+          // Token invalid, stay on login
+          await authApi.logout();
+        }
       }
-    });
-  }, []);
+    };
+    
+    checkAuth();
+  }, [setUser, setSession]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,12 +52,11 @@ const Login: React.FC = () => {
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) throw error;
+      const response = await authApi.login({ email, password });
+      
+      // Update context
+      setUser(response);
+      setSession({ user: response });
 
       toast({
         title: "Success",
@@ -53,7 +67,7 @@ const Login: React.FC = () => {
     } catch (error: any) {
       toast({
         title: "Error",
-        description: error.message || "An error occurred",
+        description: error.message || "Invalid email or password",
         variant: "destructive",
       });
     } finally {

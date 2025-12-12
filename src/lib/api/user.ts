@@ -1,7 +1,7 @@
 import { apiClient } from "./client";
-import { UpdateUserRequest, UserResponse } from "@/models/userAuth-interfaces";
+import { UpdateUserRequest, UserResponse } from "@/types/userAuth-interfaces";
 
-export const userAPi = {
+export const userApi = {
     async getCurrentUser(): Promise<UserResponse> {
         return apiClient.get<UserResponse>("/api/users/current");
     },
