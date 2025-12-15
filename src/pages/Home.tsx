@@ -149,9 +149,7 @@ const Home: React.FC = () => {
     // Search filter by title
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      result = result.filter((task) =>
-        task.title.toLowerCase().includes(query)
-      );
+      result = result.filter((task) => task.title.toLowerCase().includes(query));
     }
 
     // Date/time filter
@@ -160,7 +158,6 @@ const Home: React.FC = () => {
         const createdDate = new Date(task.createdAt);
         const updatedDate = new Date(task.updatedAt);
 
-        // Check if date matches
         const matchesCreatedDate =
           createdDate.getFullYear() === selectedDate.getFullYear() &&
           createdDate.getMonth() === selectedDate.getMonth() &&
@@ -171,10 +168,9 @@ const Home: React.FC = () => {
           updatedDate.getMonth() === selectedDate.getMonth() &&
           updatedDate.getDate() === selectedDate.getDate();
 
-        // If time is also selected, filter by hour and minute
         if (selectedTime) {
           const [hours, minutes] = selectedTime.split(":").map(Number);
-
+          
           const matchesCreatedTime =
             matchesCreatedDate &&
             createdDate.getHours() === hours &&
@@ -193,10 +189,7 @@ const Home: React.FC = () => {
     }
 
     // Sort
-    const [field, order] = sortOption.split("-") as [
-      "createdAt" | "updatedAt",
-      "asc" | "desc"
-    ];
+    const [field, order] = sortOption.split("-") as ["createdAt" | "updatedAt", "asc" | "desc"];
     result.sort((a, b) => {
       const diff = a[field] - b[field];
       return order === "asc" ? diff : -diff;
@@ -211,6 +204,17 @@ const Home: React.FC = () => {
   const handleCreateTask = () => {
     window.location.hash = "/tasks/new";
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading tasks...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background py-8 px-4 sm:py-12 sm:px-6 lg:px-8 pb-24">
