@@ -69,9 +69,7 @@ const TaskNew: React.FC = () => {
 
         <Card className="shadow-xl border-border">
           <CardHeader>
-            <CardTitle className="text-xl sm:text-2xl">
-              Create New Task
-            </CardTitle>
+            <CardTitle className="text-xl sm:text-2xl">Create New Task</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -86,6 +84,7 @@ const TaskNew: React.FC = () => {
                   placeholder="Enter task title..."
                   className="h-11 rounded-xl"
                   autoFocus
+                  disabled={loading}
                 />
               </div>
 
@@ -99,6 +98,7 @@ const TaskNew: React.FC = () => {
                   onChange={(e) => setDesc(e.target.value)}
                   placeholder="Enter task description (optional)..."
                   className="min-h-[120px] rounded-xl resize-none"
+                  disabled={loading}
                 />
               </div>
 
@@ -108,11 +108,23 @@ const TaskNew: React.FC = () => {
                   variant="outline"
                   onClick={() => (window.location.hash = "/")}
                   className="flex-1 h-11 rounded-xl"
+                  disabled={loading}
                 >
                   Cancel
                 </Button>
-                <Button type="submit" className="flex-1 h-11 rounded-xl">
-                  Create Task
+                <Button 
+                  type="submit" 
+                  className="flex-1 h-11 rounded-xl"
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <span className="flex items-center gap-2">
+                      <span className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                      Creating...
+                    </span>
+                  ) : (
+                    "Create Task"
+                  )}
                 </Button>
               </div>
             </form>

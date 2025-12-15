@@ -6,12 +6,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
+import { taskApi } from "@/lib/api/task";
 
 const TaskEdit: React.FC = () => {
   const { tasks, setTasks, user } = useApp();
   const [taskId, setTaskId] = useState<string | null>(null);
   const [title, setTitle] = useState("");
   const [desc, setDesc] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [fetchingTasks, setFetchingTasks] = useState(true);
 
   useEffect(() => {
     if (!user) {
@@ -25,12 +28,21 @@ const TaskEdit: React.FC = () => {
     if (match) {
       const id = match[1];
       setTaskId(id);
-      
-      const task = tasks.find((t) => t.id === id);
-      if (task) {
-        setTitle(task.title);
-        setDesc(task.desc || "");
-      }
+      // Fetch task from API
+      const fetchTask = async () => {
+        try {
+          const apiTask = await taskApi.getTaskById(id);
+          setTitle(apiTask.title);
+          setDesc(apiTask.desc || "");
+        } catch (error: any) {
+          toast.error(error.message || "Failed to load task");
+        } finally {
+          setFetchingTasks(false);
+        }
+      };
+      fetchTask();
+    } else {
+      setFetchingTasks(false);
     }
   }, [user, tasks]);
 
@@ -47,7 +59,12 @@ const TaskEdit: React.FC = () => {
       setTasks(
         tasks.map((t) =>
           t.id === taskId
-            ? { ...t, title: title.trim(), desc: desc.trim() || undefined, updatedAt: Date.now() }
+            ? {
+                ...t,
+                title: title.trim(),
+                desc: desc.trim() || undefined,
+                updatedAt: Date.now(),
+              }
             : t
         )
       );
