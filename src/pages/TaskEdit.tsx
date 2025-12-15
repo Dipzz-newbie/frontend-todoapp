@@ -48,32 +48,59 @@ const TaskEdit: React.FC = () => {
 
   const task = tasks.find((t) => t.id === taskId);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     if (!title.trim()) {
       toast.error("Title is required");
       return;
     }
 
-    if (taskId) {
+    if (!taskId) return;
+
+    setLoading(true);
+
+    try {
+      const updatedTask = await taskApi.updateTask(taskId, {
+        title: title.trim(),
+        desc: desc.trim() || undefined,
+      });
+
+      // Update local state
       setTasks(
         tasks.map((t) =>
           t.id === taskId
             ? {
                 ...t,
-                title: title.trim(),
-                desc: desc.trim() || undefined,
-                updatedAt: Date.now(),
+                title: updatedTask.title,
+                desc: updatedTask.desc || undefined,
+                updatedAt: new Date(updatedTask.updatedAt).getTime(),
               }
             : t
         )
       );
+
       toast.success("Task updated successfully!");
       window.location.hash = `/tasks/${taskId}`;
+    } catch (error: any) {
+      toast.error(error.message || "Failed to update task");
+    } finally {
+      setLoading(false);
     }
   };
 
-  if (!task) {
+  if (fetchingTasks) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading task...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!task && !fetchingTasks) {
     return (
       <div className="min-h-screen bg-background py-8 px-4 sm:py-12 sm:px-6 lg:px-8 pb-24">
         <div className="max-w-2xl mx-auto page-enter">
@@ -127,6 +154,7 @@ const TaskEdit: React.FC = () => {
                   placeholder="Enter task title..."
                   className="h-11 rounded-xl"
                   autoFocus
+                  disabled={loading}
                 />
               </div>
 
@@ -140,6 +168,7 @@ const TaskEdit: React.FC = () => {
                   onChange={(e) => setDesc(e.target.value)}
                   placeholder="Enter task description (optional)..."
                   className="min-h-[120px] rounded-xl resize-none"
+                  disabled={loading}
                 />
               </div>
 
@@ -149,11 +178,23 @@ const TaskEdit: React.FC = () => {
                   variant="outline"
                   onClick={() => (window.location.hash = `/tasks/${taskId}`)}
                   className="flex-1 h-11 rounded-xl"
+                  disabled={loading}
                 >
                   Cancel
                 </Button>
-                <Button type="submit" className="flex-1 h-11 rounded-xl">
-                  Save Changes
+                <Button
+                  type="submit"
+                  className="flex-1 h-11 rounded-xl"
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <span className="flex items-center gap-2">
+                      <span className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                      Saving...
+                    </span>
+                  ) : (
+                    "Save Changes"
+                  )}
                 </Button>
               </div>
             </form>
