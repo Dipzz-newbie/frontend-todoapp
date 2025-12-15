@@ -113,7 +113,7 @@ const Home: React.FC = () => {
     });
   }, []);
 
-  const toggleComplete = async(id: string) => {
+  const toggleComplete = async (id: string) => {
     try {
       const task = tasks.find((t) => t.id === t.id);
       if (!task) return;
@@ -131,10 +131,14 @@ const Home: React.FC = () => {
         desc: task.desc,
       });
 
-      toast.success(task.completed ? "Task marked as incompleted" : "Task marked as complated!")
+      toast.success(
+        task.completed
+          ? "Task marked as incompleted"
+          : "Task marked as complated!"
+      );
     } catch (error: any) {
-      setTasks(tasks)
-      toast.error(error.message || "Failed to update task")
+      setTasks(tasks);
+      toast.error(error.message || "Failed to update task");
     }
   };
 
@@ -149,7 +153,9 @@ const Home: React.FC = () => {
     // Search filter by title
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      result = result.filter((task) => task.title.toLowerCase().includes(query));
+      result = result.filter((task) =>
+        task.title.toLowerCase().includes(query)
+      );
     }
 
     // Date/time filter
@@ -170,7 +176,7 @@ const Home: React.FC = () => {
 
         if (selectedTime) {
           const [hours, minutes] = selectedTime.split(":").map(Number);
-          
+
           const matchesCreatedTime =
             matchesCreatedDate &&
             createdDate.getHours() === hours &&
@@ -189,7 +195,10 @@ const Home: React.FC = () => {
     }
 
     // Sort
-    const [field, order] = sortOption.split("-") as ["createdAt" | "updatedAt", "asc" | "desc"];
+    const [field, order] = sortOption.split("-") as [
+      "createdAt" | "updatedAt",
+      "asc" | "desc"
+    ];
     result.sort((a, b) => {
       const diff = a[field] - b[field];
       return order === "asc" ? diff : -diff;

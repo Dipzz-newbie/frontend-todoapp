@@ -7,11 +7,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
+import { taskApi } from "@/lib/api/task";
 
 const TaskNew: React.FC = () => {
   const { tasks, setTasks, user } = useApp();
   const [title, setTitle] = useState("");
   const [desc, setDesc] = useState("");
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -19,25 +21,38 @@ const TaskNew: React.FC = () => {
     }
   }, [user]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim()) {
       toast.error("Title is required");
       return;
     }
 
-    const now = Date.now();
-    const newTask: Task = {
-      id: crypto.randomUUID(),
-      title: title.trim(),
-      desc: desc.trim() || undefined,
-      completed: false,
-      createdAt: now,
-      updatedAt: now,
-    };
-    setTasks([...tasks, newTask]);
-    toast.success("Task created successfully!");
-    window.location.hash = "/";
+    setLoading(true);
+
+    try {
+      const newTask = await taskApi.createTask({
+        title: title.trim(),
+        desc: desc.trim() || undefined,
+      });
+
+      const convertedApi = {
+        id: newTask.id,
+        title: newTask.title,
+        desc: newTask.desc,
+        completed: newTask.completed,
+        createdAt: new Date(newTask.createdAt).getTime(),
+        updatedAt: new Date(newTask.updatedAt).getTime(),
+      };
+
+      setTasks([...tasks, convertedApi]);
+      toast.success("Task created successfully!");
+      window.location.hash = "/";
+    } catch (error: any) {
+      toast.error(error.message || "Failed to create new task");
+    }finally{
+      setLoading(false);
+    }
   };
 
   return (
@@ -54,7 +69,9 @@ const TaskNew: React.FC = () => {
 
         <Card className="shadow-xl border-border">
           <CardHeader>
-            <CardTitle className="text-xl sm:text-2xl">Create New Task</CardTitle>
+            <CardTitle className="text-xl sm:text-2xl">
+              Create New Task
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
