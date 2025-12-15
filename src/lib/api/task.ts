@@ -1,4 +1,4 @@
-import { CreateTaskRequest, SearchTaskRequest, SearchTaskResponse, TaskResponse, UpdateTaskRequest } from "@/types/tasks-interface";
+import { CreateTaskRequest, SearchTaskRequest, SearchTaskResponse, TaskResponse, UpdateTaskRequest } from "@/types/task-interface";
 import { apiClient } from "./client";
 
 

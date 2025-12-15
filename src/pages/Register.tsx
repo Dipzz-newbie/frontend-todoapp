@@ -1,32 +1,46 @@
-import React, { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { useToast } from '@/hooks/use-toast';
-import { UserPlus } from 'lucide-react';
-import { Link } from '@/components/Link';
+import React, { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast";
+import { UserPlus } from "lucide-react";
+import { Link } from "@/components/Link";
+import { useApp } from "@/context/AppContext";
+import { authApi } from "@/lib/api/auth";
+import { userApi } from "@/lib/api/user";
 
 const Register: React.FC = () => {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { setUser, setSession } = useApp();
+
+  // Check if user is already logged in
+  const checkAuth = async () => {
+    if (authApi.isAuthenticated()) {
+      try {
+        const userData = await userApi.getCurrentUser();
+        setUser(userData);
+        setSession({ user: userData });
+        window.location.hash = "/";
+      } catch (error) {
+        // Token invalid, stay on register
+        await authApi.logout();
+      }
+    }
+  };
 
   useEffect(() => {
-    // Check if user is already logged in
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        window.location.hash = '/';
-      }
-    });
-  }, []);
+    checkAuth();
+  }, [setUser, setSession]);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!name || !email || !password || !confirmPassword) {
       toast({
         title: "Error",
@@ -57,25 +71,20 @@ const Register: React.FC = () => {
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          emailRedirectTo: `${window.location.origin}/`,
-          data: {
-            full_name: name,
-          },
-        },
-      });
+      //register user
+      await authApi.register({ name, email, password });
 
-      if (error) throw error;
+      const loginResponse = await authApi.login({ email, password });
+
+      setUser(loginResponse);
+      setSession({ user: loginResponse });
 
       toast({
         title: "Success",
         description: "Account created successfully!",
       });
-      
-      window.location.hash = '/';
+
+      window.location.hash = "/";
     } catch (error: any) {
       toast({
         title: "Error",
@@ -92,7 +101,7 @@ const Register: React.FC = () => {
       {/* Decorative elements */}
       <div className="absolute top-0 left-0 w-96 h-96 bg-accent/10 rounded-full blur-3xl -z-10" />
       <div className="absolute bottom-0 right-0 w-96 h-96 bg-primary/10 rounded-full blur-3xl -z-10" />
-      
+
       <div className="w-full max-w-md animate-slide-in-right">
         {/* Card Container */}
         <div className="bg-card/80 backdrop-blur-sm rounded-3xl shadow-2xl border border-border/50 p-8 space-y-6 transition-all hover:shadow-accent/10 hover:shadow-3xl">
@@ -112,11 +121,13 @@ const Register: React.FC = () => {
           {/* Form */}
           <form onSubmit={handleRegister} className="space-y-5 pt-2">
             <div className="space-y-2">
-              <Label htmlFor="name" className="text-sm font-medium">Full Name</Label>
+              <Label htmlFor="name" className="text-sm font-medium">
+                Full Name
+              </Label>
               <Input
                 id="name"
                 type="text"
-                placeholder="John Doe"
+                placeholder="your name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 disabled={loading}
@@ -126,11 +137,13 @@ const Register: React.FC = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium">Email</Label>
+              <Label htmlFor="email" className="text-sm font-medium">
+                Email
+              </Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="name@example.com"
+                placeholder="your@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={loading}
@@ -140,7 +153,9 @@ const Register: React.FC = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm font-medium">Password</Label>
+              <Label htmlFor="password" className="text-sm font-medium">
+                Password
+              </Label>
               <Input
                 id="password"
                 type="password"
@@ -151,11 +166,15 @@ const Register: React.FC = () => {
                 required
                 className="h-12 rounded-xl border-border/50 focus:border-accent transition-all"
               />
-              <p className="text-xs text-muted-foreground">At least 6 characters</p>
+              <p className="text-xs text-muted-foreground">
+                At least 6 characters
+              </p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword" className="text-sm font-medium">Confirm Password</Label>
+              <Label htmlFor="confirmPassword" className="text-sm font-medium">
+                Confirm Password
+              </Label>
               <Input
                 id="confirmPassword"
                 type="password"
@@ -193,7 +212,9 @@ const Register: React.FC = () => {
               <div className="w-full border-t border-border/50"></div>
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">Already a member?</span>
+              <span className="bg-card px-2 text-muted-foreground">
+                Already a member?
+              </span>
             </div>
           </div>
 
@@ -204,17 +225,23 @@ const Register: React.FC = () => {
               className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors group"
             >
               Sign in to your account
-              <span className="text-primary font-semibold group-hover:translate-x-1 transition-transform">Sign in →</span>
+              <span className="text-primary font-semibold group-hover:translate-x-1 transition-transform">
+                Sign in →
+              </span>
             </Link>
           </div>
         </div>
 
         {/* Footer */}
         <p className="text-center text-xs text-muted-foreground/60 mt-8">
-          By continuing, you agree to our{' '}
-          <span className="text-muted-foreground hover:text-foreground cursor-pointer transition-colors">Terms</span>
-          {' '}and{' '}
-          <span className="text-muted-foreground hover:text-foreground cursor-pointer transition-colors">Privacy Policy</span>
+          By continuing, you agree to our{" "}
+          <span className="text-muted-foreground hover:text-foreground cursor-pointer transition-colors">
+            Terms
+          </span>{" "}
+          and{" "}
+          <span className="text-muted-foreground hover:text-foreground cursor-pointer transition-colors">
+            Privacy Policy
+          </span>
         </p>
       </div>
     </div>

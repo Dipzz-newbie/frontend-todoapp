@@ -6,10 +6,10 @@ import React, {
   useEffect,
 } from "react";
 import { AppContextType, Task, ThemeColors } from "@/types";
+import { TaskResponse } from "@/types/task-interface";
 import { authApi } from "@/lib/api/auth";
 import { userApi } from "@/lib/api/user";
 import { taskApi } from "@/lib/api/task";
-import { TaskResponse } from "@/types/tasks-interface";
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
