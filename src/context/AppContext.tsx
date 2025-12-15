@@ -36,7 +36,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     id: apiTask.id,
     title: apiTask.title,
     desc: apiTask.desc,
-    completed: apiTask.complatedAt,
+    completed: apiTask.completed,
     createdAt: new Date(apiTask.createdAt).getTime(),
     updatedAt: new Date(apiTask.updatedAt).getTime(),
   });

@@ -2,7 +2,7 @@ export interface TaskResponse {
     id: string;
     title: string;
     desc: string | null;
-    complatedAt: boolean;
+    completed: boolean;
     createdAt: string;
     updatedAt: string;
 }
