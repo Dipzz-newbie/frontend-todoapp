@@ -113,14 +113,29 @@ const Home: React.FC = () => {
     });
   }, []);
 
-  const toggleComplete = (id: string) => {
-    setTasks(
-      tasks.map((t) =>
-        t.id === id
-          ? { ...t, completed: !t.completed, updatedAt: Date.now() }
-          : t
-      )
-    );
+  const toggleComplete = async(id: string) => {
+    try {
+      const task = tasks.find((t) => t.id === t.id);
+      if (!task) return;
+
+      setTasks(
+        tasks.map((t) =>
+          t.id === id
+            ? { ...t, completed: !t.completed, updatedAt: Date.now() }
+            : t
+        )
+      );
+
+      await taskApi.updateTask(id, {
+        title: task.title,
+        desc: task.desc,
+      });
+
+      toast.success(task.completed ? "Task marked as incompleted" : "Task marked as complated!")
+    } catch (error: any) {
+      setTasks(tasks)
+      toast.error(error.message || "Failed to update task")
+    }
   };
 
   const clearDateFilter = () => {
