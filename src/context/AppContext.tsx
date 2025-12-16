@@ -31,18 +31,21 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     const saved = localStorage.getItem("displayName");
     return saved || "";
   });
+  const [loading, setLoading] = useState(true);
 
+  // Convert API TaskResponse to local Task type
   const convertApiTask = (apiTask: TaskResponse): Task => ({
     id: apiTask.id,
     title: apiTask.title,
-    desc: apiTask.desc,
+    desc: apiTask.desc || undefined,
     completed: apiTask.completed,
     createdAt: new Date(apiTask.createdAt).getTime(),
     updatedAt: new Date(apiTask.updatedAt).getTime(),
   });
 
-  // Authentication effect
-  const checkAuth = async () => {
+  // Check authentication on mount
+  useEffect(() => {
+    const checkAuth = async () => {
       if (authApi.isAuthenticated()) {
         try {
           const userData = await userApi.getCurrentUser();
@@ -52,43 +55,44 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
           if (userData.avatarUrl) {
             setProfilePicture(userData.avatarUrl);
           }
-        } catch (err) {
-          console.log(err);
-
+        } catch (error) {
+          console.error("Auth check failed:", error);
+          // Try to refresh token
           try {
             await authApi.refreshToken();
             const userData = await userApi.getCurrentUser();
             setUser(userData);
             setSession({ user: userData });
           } catch (refreshError) {
+            // If refresh fails, clear auth
             await authApi.logout();
             setUser(null);
             setSession(null);
           }
         }
       }
+      setLoading(false);
     };
 
-     // Fetch tasks when user is authenticated
-    const fetchTask = async() => {
-      if(user) {
-        try{
-          const apiTask = await taskApi.getTask();
-          const convertedTask = apiTask.map(convertApiTask);
-          setTasks(convertedTask);
-        }catch(err) {
-          console.log("Failed to fetch tasks: ", err);
-        }
-      }
-    }
-
-  useEffect(() => {
     checkAuth();
   }, []);
-  
+
+  // Fetch tasks when user is authenticated
   useEffect(() => {
-    fetchTask();
-  }, [user]);
+    const fetchTasks = async () => {
+      if (user && !loading) {
+        try {
+          const apiTasks = await taskApi.getTask();
+          const convertedTasks = apiTasks.map(convertApiTask);
+          setTasks(convertedTasks);
+        } catch (error) {
+          console.error("Failed to fetch tasks:", error);
+        }
+      }
+    };
+
+    fetchTasks();
+  }, [user, loading]);
 
   // Dark mode effect
   useEffect(() => {
