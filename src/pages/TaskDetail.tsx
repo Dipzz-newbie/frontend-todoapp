@@ -15,10 +15,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { taskApi } from "@/lib/api/task";
 
 const TaskDetail: React.FC = () => {
   const { tasks, setTasks, user } = useApp();
   const [taskId, setTaskId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -32,6 +35,7 @@ const TaskDetail: React.FC = () => {
     if (match) {
       setTaskId(match[1]);
     }
+    setLoading(false);
   }, [user]);
 
   const task = tasks.find((t) => t.id === taskId);
@@ -47,11 +51,20 @@ const TaskDetail: React.FC = () => {
     });
   };
 
-  const handleDelete = () => {
-    if (taskId) {
+  const handleDelete = async() => {
+    if(!taskId) return;
+
+    setLoading(true);
+
+    try{
+      await taskApi.deleteTask(taskId);
       setTasks(tasks.filter((t) => t.id !== taskId));
       toast.success("Task deleted successfully!");
       window.location.hash = "/";
+    }catch(error: any) {
+      toast.error(error.message || "Failed to delete tasks");
+    }finally{
+      setLoading(false);
     }
   };
 
