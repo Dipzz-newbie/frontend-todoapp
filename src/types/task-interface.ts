@@ -15,6 +15,7 @@ export interface CreateTaskRequest {
 export interface UpdateTaskRequest {
     title?: string;
     desc?:string;
+    completed?: boolean;
 }
 
 export interface SearchTaskRequest {
