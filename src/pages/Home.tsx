@@ -54,31 +54,31 @@ const Home: React.FC = () => {
     }
   }, [user]);
 
-  const fetchTask = async () => {
-    if (user) {
-      setLoading(true);
-
-      try {
-        const apiTasks = await taskApi.getTask();
-        const convertedTask: Task[] = apiTasks.map((t: TaskResponse) => ({
-          id: t.id,
-          title: t.title,
-          desc: t.desc || undefined,
-          completed: t.completed,
-          createdAt: new Date(t.createdAt).getTime(),
-          updatedAt: new Date(t.updatedAt).getTime(),
-        }));
-        setTasks(convertedTask);
-      } catch (error: any) {
-        toast.error(error.message || "failed to load tasks");
-      } finally {
-        setLoading(false);
-      }
-    }
-  };
-
+  // Fetch tasks from API
   useEffect(() => {
-    fetchTask();
+    const fetchTasks = async () => {
+      if (user) {
+        setLoading(true);
+        try {
+          const apiTasks = await taskApi.getTask();
+          const convertedTasks: Task[] = apiTasks.map((t: TaskResponse) => ({
+            id: t.id,
+            title: t.title,
+            desc: t.desc || undefined,
+            completed: t.completed,
+            createdAt: new Date(t.createdAt).getTime(),
+            updatedAt: new Date(t.updatedAt).getTime(),
+          }));
+          setTasks(convertedTasks);
+        } catch (error: any) {
+          toast.error(error.message || "Failed to load tasks");
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchTasks();
   }, [user, setTasks]);
 
   // Real-time clock update
@@ -91,13 +91,10 @@ const Home: React.FC = () => {
 
   // Format time in WIB (UTC+7)
   const formatWIBTime = useCallback((date: Date) => {
-    const wibOffset = 7 * 60; // WIB is UTC+7 in minutes
+    const wibOffset = 7 * 60;
     const utc = date.getTime() + date.getTimezoneOffset() * 60000;
     const wibDate = new Date(utc + wibOffset * 60000);
-    return wibDate.toLocaleTimeString("en-GB", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    return wibDate.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
   }, []);
 
   // Format date in English
@@ -115,28 +112,26 @@ const Home: React.FC = () => {
 
   const toggleComplete = async (id: string) => {
     try {
-      const task = tasks.find((t) => t.id === t.id);
+      const task = tasks.find((t) => t.id === id);
       if (!task) return;
 
+      const newCompletedStatus = !task.completed;
+
+      // Optimistic update
       setTasks(
         tasks.map((t) =>
-          t.id === id
-            ? { ...t, completed: !t.completed, updatedAt: Date.now() }
-            : t
+          t.id === id ? { ...t, completed: newCompletedStatus, updatedAt: Date.now() } : t
         )
       );
 
+      // Update on server with completed status
       await taskApi.updateTask(id, {
-        title: task.title,
-        desc: task.desc,
+        completed: newCompletedStatus,
       });
 
-      toast.success(
-        task.completed
-          ? "Task marked as incompleted"
-          : "Task marked as complated!"
-      );
+      toast.success(newCompletedStatus ? "Task completed!" : "Task marked as incomplete");
     } catch (error: any) {
+      // Revert on error
       setTasks(tasks);
       toast.error(error.message || "Failed to update task");
     }
@@ -153,9 +148,7 @@ const Home: React.FC = () => {
     // Search filter by title
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      result = result.filter((task) =>
-        task.title.toLowerCase().includes(query)
-      );
+      result = result.filter((task) => task.title.toLowerCase().includes(query));
     }
 
     // Date/time filter
@@ -176,7 +169,7 @@ const Home: React.FC = () => {
 
         if (selectedTime) {
           const [hours, minutes] = selectedTime.split(":").map(Number);
-
+          
           const matchesCreatedTime =
             matchesCreatedDate &&
             createdDate.getHours() === hours &&
@@ -195,10 +188,7 @@ const Home: React.FC = () => {
     }
 
     // Sort
-    const [field, order] = sortOption.split("-") as [
-      "createdAt" | "updatedAt",
-      "asc" | "desc"
-    ];
+    const [field, order] = sortOption.split("-") as ["createdAt" | "updatedAt", "asc" | "desc"];
     result.sort((a, b) => {
       const diff = a[field] - b[field];
       return order === "asc" ? diff : -diff;
@@ -236,9 +226,7 @@ const Home: React.FC = () => {
           <div className="flex flex-col gap-1">
             <div className="flex items-center gap-2 text-muted-foreground">
               <Clock size={16} className="shrink-0" />
-              <span className="text-sm sm:text-base font-medium">
-                {formatWIBTime(currentTime)} WIB
-              </span>
+              <span className="text-sm sm:text-base font-medium">{formatWIBTime(currentTime)} WIB</span>
             </div>
             <p className="text-xs sm:text-sm text-muted-foreground font-light">
               {formatFullDate(currentTime)}
@@ -252,10 +240,7 @@ const Home: React.FC = () => {
           <div className="flex flex-col gap-3 mb-6">
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="relative flex-1">
-                <Search
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                  size={18}
-                />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
                 <Input
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -263,27 +248,16 @@ const Home: React.FC = () => {
                   className="pl-10 h-11 rounded-xl"
                 />
               </div>
-              <Select
-                value={sortOption}
-                onValueChange={(v) => setSortOption(v as SortOption)}
-              >
+              <Select value={sortOption} onValueChange={(v) => setSortOption(v as SortOption)}>
                 <SelectTrigger className="w-full sm:w-[200px] h-11 rounded-xl">
                   <ArrowUpDown size={16} className="mr-2" />
                   <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="createdAt-desc">
-                    Created (Newest)
-                  </SelectItem>
-                  <SelectItem value="createdAt-asc">
-                    Created (Oldest)
-                  </SelectItem>
-                  <SelectItem value="updatedAt-desc">
-                    Updated (Newest)
-                  </SelectItem>
-                  <SelectItem value="updatedAt-asc">
-                    Updated (Oldest)
-                  </SelectItem>
+                  <SelectItem value="createdAt-desc">Created (Newest)</SelectItem>
+                  <SelectItem value="createdAt-asc">Created (Oldest)</SelectItem>
+                  <SelectItem value="updatedAt-desc">Updated (Newest)</SelectItem>
+                  <SelectItem value="updatedAt-asc">Updated (Oldest)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -300,9 +274,7 @@ const Home: React.FC = () => {
                     )}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {selectedDate
-                      ? format(selectedDate, "dd MMM yyyy", { locale: id })
-                      : "Select date"}
+                    {selectedDate ? format(selectedDate, "dd MMM yyyy", { locale: id }) : "Select date"}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
@@ -342,8 +314,7 @@ const Home: React.FC = () => {
               <div className="flex items-center gap-2 text-sm text-muted-foreground bg-secondary/50 px-3 py-2 rounded-lg">
                 <CalendarIcon size={14} />
                 <span>
-                  Showing tasks on:{" "}
-                  {format(selectedDate, "dd MMMM yyyy", { locale: id })}
+                  Showing tasks on: {format(selectedDate, "dd MMMM yyyy", { locale: id })}
                   {selectedTime && ` at ${selectedTime}`}
                 </span>
               </div>
