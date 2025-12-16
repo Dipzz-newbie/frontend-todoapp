@@ -54,7 +54,7 @@ const TaskDetail: React.FC = () => {
   const handleDelete = async() => {
     if(!taskId) return;
 
-    setLoading(true);
+    setDeleting(true);
 
     try{
       await taskApi.deleteTask(taskId);
@@ -64,13 +64,24 @@ const TaskDetail: React.FC = () => {
     }catch(error: any) {
       toast.error(error.message || "Failed to delete tasks");
     }finally{
-      setLoading(false);
+      setDeleting(false);
     }
   };
 
   const handleEdit = () => {
     window.location.hash = `/tasks/${taskId}/edit`;
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading task...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!task) {
     return (
@@ -149,7 +160,7 @@ const TaskDetail: React.FC = () => {
                 variant="outline"
                 onClick={handleEdit}
                 className="flex-1 h-11 rounded-xl gap-2"
-                disabled={task.completed}
+                disabled={task.completed || deleting}
               >
                 <Edit2 size={18} />
                 Edit
@@ -159,9 +170,19 @@ const TaskDetail: React.FC = () => {
                   <Button
                     variant="destructive"
                     className="flex-1 h-11 rounded-xl gap-2"
+                    disabled={deleting}
                   >
-                    <Trash2 size={18} />
-                    Delete
+                    {deleting ? (
+                      <>
+                        <span className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                        Deleting...
+                      </>
+                    ) : (
+                      <>
+                        <Trash2 size={18} />
+                        Delete
+                      </>
+                    )}
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
