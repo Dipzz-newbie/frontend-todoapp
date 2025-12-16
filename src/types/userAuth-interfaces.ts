@@ -21,9 +21,9 @@ export interface LoginRequest {
 }
 
 export interface UpdateUserRequest {
-    email?: string;
     password?: string;
     name?: string;
+    avatarUrl?: string
 }
 
 export interface RefreshTokenResponse {

@@ -13,6 +13,8 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { taskApi } from "@/lib/api/task";
+import { userApi } from "@/lib/api/user";
 
 const Settings: React.FC = () => {
   const {
@@ -28,6 +30,8 @@ const Settings: React.FC = () => {
   } = useApp();
 
   const [tempDisplayName, setTempDisplayName] = useState(displayName);
+  const [saving, setSaving] = useState(false);
+  const [clearing, setClearing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -37,23 +41,36 @@ const Settings: React.FC = () => {
     }
   }, [user]);
 
-  const handleClearAll = () => {
+  const handleClearAll = async () => {
     if (
       window.confirm(
         "Are you sure you want to delete all tasks? This action cannot be undone."
       )
     ) {
-      setTasks([]);
-      toast.success("All tasks have been cleared");
+      setClearing(true);
+      try {
+        // Get all tasks and delete them one by one
+        const tasks = await taskApi.getTask();
+        
+        await Promise.all(
+          tasks.map((task) => taskApi.deleteTask(task.id))
+        );
+
+        setTasks([]);
+        toast.success("All tasks have been cleared");
+      } catch (error: any) {
+        toast.error(error.message || "Failed to clear tasks");
+      } finally {
+        setClearing(false);
+      }
     }
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
 
     if (file) {
       // Check file size (max 5MB)
-
       if (file.size > 5 * 1024 * 1024) {
         toast.error("Image size should be less than 5MB");
         return;
@@ -65,23 +82,49 @@ const Settings: React.FC = () => {
       }
 
       const reader = new FileReader();
-      reader.onload = () => {
-        setProfilePicture(reader.result as string);
-        toast.success("Profile picture updated!");
+      reader.onload = async () => {
+        const avatarUrl = reader.result as string;
+        
+        try {
+          setSaving(true);
+          await userApi.updateCurrentUser({ avatarUrl });
+          setProfilePicture(avatarUrl);
+          toast.success("Profile picture updated!");
+        } catch (error: any) {
+          toast.error(error.message || "Failed to update profile picture");
+        } finally {
+          setSaving(false);
+        }
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const handleRemoveProfilePicture = () => {
-    setProfilePicture("");
-    toast.success("Profile picture removed");
+  const handleRemoveProfilePicture = async () => {
+    try {
+      setSaving(true);
+      await userApi.updateCurrentUser({ avatarUrl: "" });
+      setProfilePicture("");
+      toast.success("Profile picture removed");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to remove profile picture");
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handlerSaveDisplayName = () => {
+  const handlerSaveDisplayName = async () => {
     if (tempDisplayName.trim()) {
-      setDisplayName(tempDisplayName.trim());
-      toast.success("Display name updated!");
+      try {
+        setSaving(true);
+        await userApi.updateCurrentUser({ name: tempDisplayName.trim() });
+        setDisplayName(tempDisplayName.trim());
+        toast.success("Display name updated!");
+      } catch (error: any) {
+        toast.error(error.message || "Failed to update display name");
+      } finally {
+        setSaving(false);
+      }
     }
   };
 
@@ -138,6 +181,7 @@ const Settings: React.FC = () => {
                 <button
                   onClick={() => fileInputRef.current?.click()}
                   className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                  disabled={saving}
                 >
                   <Camera size={24} className="text-white" />
                 </button>
@@ -148,6 +192,7 @@ const Settings: React.FC = () => {
                   accept="image/*"
                   onChange={handleImageUpload}
                   className="hidden"
+                  disabled={saving}
                 />
               </div>
 
@@ -167,16 +212,18 @@ const Settings: React.FC = () => {
                       onChange={(e) => setTempDisplayName(e.target.value)}
                       placeholder="Enter your name"
                       className="flex-1"
+                      disabled={saving}
                     />
                     <Button
                       onClick={handlerSaveDisplayName}
                       size="sm"
                       disabled={
+                        saving ||
                         !tempDisplayName.trim() ||
                         tempDisplayName === displayName
                       }
                     >
-                      Save
+                      {saving ? "Saving..." : "Save"}
                     </Button>
                   </div>
                 </div>
@@ -194,6 +241,7 @@ const Settings: React.FC = () => {
                     size="sm"
                     onClick={handleRemoveProfilePicture}
                     className="w-full sm:w-auto"
+                    disabled={saving}
                   >
                     Remove Picture
                   </Button>
@@ -245,8 +293,9 @@ const Settings: React.FC = () => {
               size="sm"
               onClick={handleClearAll}
               className="min-w-[80px]"
+              disabled={clearing}
             >
-              Clear
+              {clearing ? "Clearing..." : "Clear"}
             </Button>
           </div>
 
