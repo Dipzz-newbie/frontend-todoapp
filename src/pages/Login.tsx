@@ -1,5 +1,3 @@
-// src/pages/Login.tsx
-
 import React, { useState, useEffect } from 'react';
 import { authApi } from '@/lib/api/auth';
 import { userApi } from '@/lib/api/user';
