@@ -33,6 +33,8 @@ const Settings: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [clearing, setClearing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [loading, setLoading] = useState(false);
+  const [profileName, setProfileName] = useState<string>("");
 
   useEffect(() => {
     // Redirect to login if not logged in
@@ -40,6 +42,24 @@ const Settings: React.FC = () => {
       window.location.hash = "/login";
     }
   }, [user]);
+
+  const getProfileUser = async() => {
+    if(user) {
+      setLoading(true)
+      try{
+        const dataUser = await userApi.getCurrentUser();
+        setProfileName(dataUser.name);
+      }catch(error) {
+        toast.error(error.message || "Failed to get profile user")
+      }finally{
+        setLoading(false);
+      }
+    }
+  }
+
+  useEffect(() => {
+    getProfileUser();
+  }, [])
 
   const handleClearAll = async () => {
     if (
@@ -49,12 +69,9 @@ const Settings: React.FC = () => {
     ) {
       setClearing(true);
       try {
-        // Get all tasks and delete them one by one
         const tasks = await taskApi.getTask();
-        
-        await Promise.all(
-          tasks.map((task) => taskApi.deleteTask(task.id))
-        );
+
+        await Promise.all(tasks.map((task) => taskApi.deleteTask(task.id)));
 
         setTasks([]);
         toast.success("All tasks have been cleared");
@@ -84,7 +101,7 @@ const Settings: React.FC = () => {
       const reader = new FileReader();
       reader.onload = async () => {
         const avatarUrl = reader.result as string;
-        
+
         try {
           setSaving(true);
           await userApi.updateCurrentUser({ avatarUrl });
@@ -114,11 +131,10 @@ const Settings: React.FC = () => {
   };
 
   const handlerSaveDisplayName = async () => {
-    if (tempDisplayName.trim()) {
+    if (profileName.trim()) {
       try {
         setSaving(true);
-        await userApi.updateCurrentUser({ name: tempDisplayName.trim() });
-        setDisplayName(tempDisplayName.trim());
+        await userApi.updateCurrentUser({name: profileName});
         toast.success("Display name updated!");
       } catch (error: any) {
         toast.error(error.message || "Failed to update display name");
@@ -131,6 +147,17 @@ const Settings: React.FC = () => {
   const getInitials = (email: string) => {
     return email.substring(0, 2).toUpperCase();
   };
+
+    if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading task...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background py-8 px-4 sm:py-12 sm:px-6 lg:px-8 pb-24">
@@ -208,8 +235,8 @@ const Settings: React.FC = () => {
                   <div className="flex gap-2">
                     <Input
                       id="displayName"
-                      value={tempDisplayName}
-                      onChange={(e) => setTempDisplayName(e.target.value)}
+                      value={profileName}
+                      onChange={(e) => setProfileName(e.target.value)}
                       placeholder="Enter your name"
                       className="flex-1"
                       disabled={saving}
@@ -219,8 +246,8 @@ const Settings: React.FC = () => {
                       size="sm"
                       disabled={
                         saving ||
-                        !tempDisplayName.trim() ||
-                        tempDisplayName === displayName
+                        !profileName.trim() ||
+                        profileName === displayName
                       }
                     >
                       {saving ? "Saving..." : "Save"}

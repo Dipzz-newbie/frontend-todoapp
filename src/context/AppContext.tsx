@@ -17,23 +17,31 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
   children,
 }) => {
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [darkMode, setDarkMode] = useState(() => {
+  const [user, setUser] = useState<any>(null);
+  const [session, setSession] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  const [darkMode, setDarkMode] = useState<boolean>(() => {
     const saved = localStorage.getItem("darkMode");
     return saved ? JSON.parse(saved) : false;
   });
-  const [user, setUser] = useState<any>(null);
-  const [session, setSession] = useState<any>(null);
-  const [profilePicture, setProfilePicture] = useState<string>(() => {
-    const saved = localStorage.getItem("profilePicture");
-    return saved || "";
-  });
-  const [displayName, setDisplayName] = useState<string>(() => {
-    const saved = localStorage.getItem("displayName");
-    return saved || "";
-  });
-  const [loading, setLoading] = useState(true);
 
-  // Convert API TaskResponse to local Task type
+  const [displayName, setDisplayName] = useState<string>("");
+
+  const [profilePicture, setProfilePicture] = useState<string>("");
+
+  const clearUserCache = () => {
+    setUser(null);
+    setSession(null);
+    setTasks([]);
+    setDisplayName("");
+    setProfilePicture("");
+
+    localStorage.removeItem("displayName");
+    localStorage.removeItem("profilePicture");
+    localStorage.removeItem("tasks");
+  };
+
   const convertApiTask = (apiTask: TaskResponse): Task => ({
     id: apiTask.id,
     title: apiTask.title,
@@ -43,76 +51,85 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
     updatedAt: new Date(apiTask.updatedAt).getTime(),
   });
 
-  // Check authentication on mount
+
   useEffect(() => {
     const checkAuth = async () => {
-      if (authApi.isAuthenticated()) {
-        try {
-          const userData = await userApi.getCurrentUser();
-          setUser(userData);
-          setSession({ user: userData });
-          setDisplayName(userData.name);
-          if (userData.avatarUrl) {
-            setProfilePicture(userData.avatarUrl);
-          }
-        } catch (error) {
-          console.error("Auth check failed:", error);
-          // Try to refresh token
-          try {
-            await authApi.refreshToken();
-            const userData = await userApi.getCurrentUser();
-            setUser(userData);
-            setSession({ user: userData });
-          } catch (refreshError) {
-            // If refresh fails, clear auth
-            await authApi.logout();
-            setUser(null);
-            setSession(null);
-          }
+      try {
+        if (!authApi.isAuthenticated()) {
+          clearUserCache();
+          return;
         }
+
+        const token = authApi.getAccessToken();
+        if (!token) {
+          clearUserCache();
+          return;
+        }
+
+        const userData = await userApi.getCurrentUser();
+
+        setUser(userData);
+        setSession({ user: userData });
+        setDisplayName(userData.name || "");
+
+        if (userData.avatarUrl) {
+          setProfilePicture(userData.avatarUrl);
+        }
+      } catch (err) {
+        await authApi.logout();
+        clearUserCache();
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
 
     checkAuth();
   }, []);
 
-  // Fetch tasks when user is authenticated
   useEffect(() => {
+    if (loading) return;
+    if (!user) return;
+
     const fetchTasks = async () => {
-      if (user && !loading) {
-        try {
-          const apiTasks = await taskApi.getTask();
-          const convertedTasks = apiTasks.map(convertApiTask);
-          setTasks(convertedTasks);
-        } catch (error) {
-          console.error("Failed to fetch tasks:", error);
+      try {
+        const apiTasks = await taskApi.getTask();
+        setTasks(apiTasks.map(convertApiTask));
+      } catch (err: any) {
+        // task kosong = NORMAL
+        if (err?.message?.includes("404")) {
+          setTasks([]);
+          return;
         }
+
+        // token invalid
+        if (err?.message?.includes("401")) {
+          await authApi.logout();
+          clearUserCache();
+          window.location.hash = "/login";
+          return;
+        }
+
+        console.error("Failed to fetch tasks:", err);
       }
     };
 
     fetchTasks();
   }, [user, loading]);
 
-  // Dark mode effect
   useEffect(() => {
     localStorage.setItem("darkMode", JSON.stringify(darkMode));
-    if (darkMode) {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
+    document.documentElement.classList.toggle("dark", darkMode);
   }, [darkMode]);
 
-  // Save profile picture to localStorage
   useEffect(() => {
-    localStorage.setItem("profilePicture", profilePicture);
-  }, [profilePicture]);
-
-  // Save display name to localStorage
-  useEffect(() => {
+    if (!user) return;
     localStorage.setItem("displayName", displayName);
-  }, [displayName]);
+  }, [displayName, user]);
+
+  useEffect(() => {
+    if (!user) return;
+    localStorage.setItem("profilePicture", profilePicture);
+  }, [profilePicture, user]);
 
   const theme: ThemeColors = {
     bg: "hsl(var(--background))",
@@ -126,13 +143,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({
 
   const signOut = async () => {
     await authApi.logout();
-    setUser(null);
-    setSession(null);
-    setTasks([]);
-    setProfilePicture("");
-    setDisplayName("");
-    localStorage.removeItem("profilePicture");
-    localStorage.removeItem("displayName");
+    clearUserCache();
     window.location.hash = "/login";
   };
 

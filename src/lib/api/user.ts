@@ -7,6 +7,6 @@ export const userApi = {
     },
 
     async updateCurrentUser(data: UpdateUserRequest): Promise<UserResponse> {
-        return apiClient.patch<UserResponse>("/api/user/current", data)
+        return apiClient.patch<UserResponse>("/api/users/current", data)
     }
 }

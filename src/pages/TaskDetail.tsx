@@ -18,7 +18,7 @@ import {
 import { taskApi } from "@/lib/api/task";
 
 const TaskDetail: React.FC = () => {
-  const { tasks, setTasks, user } = useApp();
+  const {tasks, setTasks, user } = useApp();
   const [taskId, setTaskId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
