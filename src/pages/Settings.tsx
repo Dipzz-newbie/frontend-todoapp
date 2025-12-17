@@ -29,12 +29,13 @@ const Settings: React.FC = () => {
     setDisplayName,
   } = useApp();
 
-  const [tempDisplayName, setTempDisplayName] = useState(displayName);
   const [saving, setSaving] = useState(false);
   const [clearing, setClearing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [loading, setLoading] = useState(false);
   const [profileName, setProfileName] = useState<string>("");
+  const [profileEmail, setProfileEmail] = useState<string>("");
+  const [profileAvatar, setProfileAvatar] = useState<string>("");
 
   useEffect(() => {
     // Redirect to login if not logged in
@@ -49,7 +50,9 @@ const Settings: React.FC = () => {
       try{
         const dataUser = await userApi.getCurrentUser();
         setProfileName(dataUser.name);
-      }catch(error) {
+        setProfileEmail(dataUser.email);
+        setProfileAvatar(dataUser.avatarUrl)
+      }catch(error: any) {
         toast.error(error.message || "Failed to get profile user")
       }finally{
         setLoading(false);
@@ -59,7 +62,7 @@ const Settings: React.FC = () => {
 
   useEffect(() => {
     getProfileUser();
-  }, [])
+  }, [user, setProfileName])
 
   const handleClearAll = async () => {
     if (
@@ -105,7 +108,7 @@ const Settings: React.FC = () => {
         try {
           setSaving(true);
           await userApi.updateCurrentUser({ avatarUrl });
-          setProfilePicture(avatarUrl);
+          setProfileAvatar(avatarUrl);
           toast.success("Profile picture updated!");
         } catch (error: any) {
           toast.error(error.message || "Failed to update profile picture");
@@ -191,15 +194,15 @@ const Settings: React.FC = () => {
               {/* Profile Picture */}
               <div className="relative group">
                 <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-primary shadow-lg">
-                  {profilePicture ? (
+                  {profileAvatar ? (
                     <img
-                      src={profilePicture}
+                      src={profileAvatar || "https://www.gravatar.com/avatar/?d=mp"}
                       alt="Profile"
                       className="w-full h-full object-cover"
                     />
                   ) : (
                     <div className="w-full h-full bg-primary flex items-center justify-center text-2xl font-bold text-primary-foreground">
-                      {user?.email ? getInitials(user.email) : "U"}
+                      {profileEmail}
                     </div>
                   )}
                 </div>
