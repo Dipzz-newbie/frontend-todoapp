@@ -91,62 +91,39 @@ const Settings: React.FC = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    console.group("🟡 AVATAR UPLOAD DEBUG");
-
-    console.log("📁 File object:", file);
-    console.log("📁 name:", file.name);
-    console.log("📁 type:", file.type);
-    console.log("📁 size (bytes):", file.size);
-    console.log("📁 size (MB):", (file.size / 1024 / 1024).toFixed(2));
-
     if (!file.type.startsWith("image/")) {
-      console.warn("❌ NOT IMAGE");
       toast.error("Image only");
-      console.groupEnd();
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      console.warn("❌ TOO LARGE");
       toast.error("Max 5MB");
-      console.groupEnd();
       return;
     }
 
-    const formData = new FormData();
-    formData.append("avatar", file);
-
-    // 🔍 DEBUG FORMDATA
-    for (const [key, value] of formData.entries()) {
-      console.log("📦 FormData key:", key);
-      console.log("📦 FormData value:", value);
-      if (value instanceof File) {
-        console.log("   ↳ name:", value.name);
-        console.log("   ↳ type:", value.type);
-        console.log("   ↳ size:", value.size);
-      }
-    }
-
     try {
-      console.log("🚀 Sending request...");
-      const res = await userApi.uploadAvatar(formData);
-      console.log("✅ Response from backend:", res);
+      const formData = new FormData();
+      formData.append("avatar", file);
 
+      const res = await userApi.uploadAvatar(formData);
       setProfileAvatar(res.avatarUrl);
+
       toast.success("Avatar updated!");
     } catch (e: any) {
-      console.error("❌ Upload error:", e);
       toast.error(e.message || "Upload failed");
-    } finally {
-      console.groupEnd();
     }
   };
 
   const handleRemoveProfilePicture = async () => {
     try {
       setSaving(true);
-      await userApi.updateCurrentUser({ avatarUrl: "" });
-      setProfilePicture("");
+
+      await userApi.updateCurrentUser({
+        avatarUrl: "",
+      });
+
+      setProfileAvatar("");
+
       toast.success("Profile picture removed");
     } catch (error: any) {
       toast.error(error.message || "Failed to remove profile picture");
@@ -289,7 +266,7 @@ const Settings: React.FC = () => {
                   </p>
                 </div>
 
-                {profilePicture && (
+                {profileAvatar && (
                   <Button
                     variant="outline"
                     size="sm"
