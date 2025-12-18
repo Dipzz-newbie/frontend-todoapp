@@ -8,5 +8,17 @@ export const userApi = {
 
     async updateCurrentUser(data: UpdateUserRequest): Promise<UserResponse> {
         return apiClient.patch<UserResponse>("/api/users/current", data)
-    }
+    },
+
+    async uploadAvatar(formData: FormData): Promise<{ avatarUrl: string }> {
+    return apiClient.post<{ avatarUrl: string }>(
+        "/api/users/avatar",
+        formData
+    );
+}
+
+
+
+
+
 }

@@ -22,11 +22,13 @@ class ApiClient {
         this.baseURL = baseURL;
     }
 
-    private getAuthHeaders(): HeadersInit {
+    private getAuthHeaders(json: boolean = true): HeadersInit {
         const token = localStorage.getItem("accessToken");
-        const headers: HeadersInit = {
-            "Content-Type": "application/json",
-        };
+        const headers: HeadersInit = {};
+
+        if (json) {
+            headers["Content-Type"] = "application/json";
+        }
 
         if (token) {
             headers["Authorization"] = `Bearer ${token}`;
@@ -34,6 +36,7 @@ class ApiClient {
 
         return headers;
     }
+
 
     private async handleResponse<T>(response: Response, retryRequest?: () => Promise<Response>): Promise<T> {
         const contentType = response.headers.get("content-type");
@@ -112,26 +115,42 @@ class ApiClient {
     }
 
     async post<T>(endpoint: string, data?: any): Promise<T> {
-        const makeRequest = () => fetch(`${this.baseURL}${endpoint}`, {
-            method: "POST",
-            headers: this.getAuthHeaders(),
-            body: data ? JSON.stringify(data) : undefined,
-        });
+        const isFormData = data instanceof FormData;
+
+        const makeRequest = () =>
+            fetch(`${this.baseURL}${endpoint}`, {
+                method: "POST",
+                headers: this.getAuthHeaders(!isFormData),
+                body: data
+                    ? isFormData
+                        ? data
+                        : JSON.stringify(data)
+                    : undefined,
+            });
 
         const response = await makeRequest();
         return this.handleResponse<T>(response, makeRequest);
     }
+
 
     async patch<T>(endpoint: string, data?: any): Promise<T> {
-        const makeRequest = () => fetch(`${this.baseURL}${endpoint}`, {
-            method: "PATCH",
-            headers: this.getAuthHeaders(),
-            body: data ? JSON.stringify(data) : undefined,
-        });
+        const isFormData = data instanceof FormData;
+
+        const makeRequest = () =>
+            fetch(`${this.baseURL}${endpoint}`, {
+                method: "PATCH",
+                headers: this.getAuthHeaders(!isFormData),
+                body: data
+                    ? isFormData
+                        ? data
+                        : JSON.stringify(data)
+                    : undefined,
+            });
 
         const response = await makeRequest();
         return this.handleResponse<T>(response, makeRequest);
     }
+
 
     async delete<T>(endpoint: string): Promise<T> {
         const makeRequest = () => fetch(`${this.baseURL}${endpoint}`, {

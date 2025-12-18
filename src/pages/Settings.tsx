@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { taskApi } from "@/lib/api/task";
 import { userApi } from "@/lib/api/user";
+import { getAvatarUrl } from "@/lib/avatar";
 
 const Settings: React.FC = () => {
   const {
@@ -44,25 +45,25 @@ const Settings: React.FC = () => {
     }
   }, [user]);
 
-  const getProfileUser = async() => {
-    if(user) {
-      setLoading(true)
-      try{
+  const getProfileUser = async () => {
+    if (user) {
+      setLoading(true);
+      try {
         const dataUser = await userApi.getCurrentUser();
         setProfileName(dataUser.name);
         setProfileEmail(dataUser.email);
-        setProfileAvatar(dataUser.avatarUrl)
-      }catch(error: any) {
-        toast.error(error.message || "Failed to get profile user")
-      }finally{
+        setProfileAvatar(dataUser.avatarUrl);
+      } catch (error: any) {
+        toast.error(error.message || "Failed to get profile user");
+      } finally {
         setLoading(false);
       }
     }
-  }
+  };
 
   useEffect(() => {
     getProfileUser();
-  }, [user, setProfileName])
+  }, [user, setProfileName]);
 
   const handleClearAll = async () => {
     if (
@@ -88,35 +89,56 @@ const Settings: React.FC = () => {
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    if (!file) return;
 
-    if (file) {
-      // Check file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error("Image size should be less than 5MB");
-        return;
+    console.group("🟡 AVATAR UPLOAD DEBUG");
+
+    console.log("📁 File object:", file);
+    console.log("📁 name:", file.name);
+    console.log("📁 type:", file.type);
+    console.log("📁 size (bytes):", file.size);
+    console.log("📁 size (MB):", (file.size / 1024 / 1024).toFixed(2));
+
+    if (!file.type.startsWith("image/")) {
+      console.warn("❌ NOT IMAGE");
+      toast.error("Image only");
+      console.groupEnd();
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      console.warn("❌ TOO LARGE");
+      toast.error("Max 5MB");
+      console.groupEnd();
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("avatar", file);
+
+    // 🔍 DEBUG FORMDATA
+    for (const [key, value] of formData.entries()) {
+      console.log("📦 FormData key:", key);
+      console.log("📦 FormData value:", value);
+      if (value instanceof File) {
+        console.log("   ↳ name:", value.name);
+        console.log("   ↳ type:", value.type);
+        console.log("   ↳ size:", value.size);
       }
+    }
 
-      if (!file.type.startsWith("image/")) {
-        toast.error("Please upload an image file");
-        return;
-      }
+    try {
+      console.log("🚀 Sending request...");
+      const res = await userApi.uploadAvatar(formData);
+      console.log("✅ Response from backend:", res);
 
-      const reader = new FileReader();
-      reader.onload = async () => {
-        const avatarUrl = reader.result as string;
-
-        try {
-          setSaving(true);
-          await userApi.updateCurrentUser({ avatarUrl });
-          setProfileAvatar(avatarUrl);
-          toast.success("Profile picture updated!");
-        } catch (error: any) {
-          toast.error(error.message || "Failed to update profile picture");
-        } finally {
-          setSaving(false);
-        }
-      };
-      reader.readAsDataURL(file);
+      setProfileAvatar(res.avatarUrl);
+      toast.success("Avatar updated!");
+    } catch (e: any) {
+      console.error("❌ Upload error:", e);
+      toast.error(e.message || "Upload failed");
+    } finally {
+      console.groupEnd();
     }
   };
 
@@ -137,7 +159,7 @@ const Settings: React.FC = () => {
     if (profileName.trim()) {
       try {
         setSaving(true);
-        await userApi.updateCurrentUser({name: profileName});
+        await userApi.updateCurrentUser({ name: profileName });
         toast.success("Display name updated!");
       } catch (error: any) {
         toast.error(error.message || "Failed to update display name");
@@ -151,7 +173,7 @@ const Settings: React.FC = () => {
     return email.substring(0, 2).toUpperCase();
   };
 
-    if (loading) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -196,14 +218,16 @@ const Settings: React.FC = () => {
                 <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-primary shadow-lg">
                   {profileAvatar ? (
                     <img
-                      src={profileAvatar || "https://www.gravatar.com/avatar/?d=mp"}
+                      src={getAvatarUrl(profileAvatar)}
                       alt="Profile"
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <div className="w-full h-full bg-primary flex items-center justify-center text-2xl font-bold text-primary-foreground">
-                      {profileEmail}
-                    </div>
+                    <img
+                      src={`https://www.gravatar.com/avatar/?d=mp&s=200`}
+                      alt="Profile"
+                      className="w-full h-full object-cover"
+                    />
                   )}
                 </div>
 
