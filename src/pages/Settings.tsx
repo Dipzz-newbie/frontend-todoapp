@@ -87,33 +87,6 @@ const Settings: React.FC = () => {
     }
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (!file.type.startsWith("image/")) {
-      toast.error("Image only");
-      return;
-    }
-
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error("Max 5MB");
-      return;
-    }
-
-    try {
-      const formData = new FormData();
-      formData.append("avatar", file);
-
-      const res = await userApi.uploadAvatar(formData);
-      setProfileAvatar(res.avatarUrl);
-
-      toast.success("Avatar updated!");
-    } catch (e: any) {
-      toast.error(e.message || "Upload failed");
-    }
-  };
-
   const handleRemoveProfilePicture = async () => {
     try {
       setSaving(true);
@@ -129,6 +102,37 @@ const Settings: React.FC = () => {
       toast.error(error.message || "Failed to remove profile picture");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Image only");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Max 5MB");
+      return;
+    }
+
+    try {
+      if (profileAvatar !== null) {
+        await handleRemoveProfilePicture();
+      }
+
+      const formData = new FormData();
+      formData.append("avatar", file);
+
+      const res = await userApi.uploadAvatar(formData);
+      setProfileAvatar(res.avatarUrl);
+
+      toast.success("Avatar updated!");
+    } catch (e: any) {
+      toast.error(e.message || "Upload failed");
     }
   };
 
