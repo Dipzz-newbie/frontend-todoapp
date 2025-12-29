@@ -11,14 +11,14 @@ export const userApi = {
     },
 
     async uploadAvatar(formData: FormData): Promise<{ avatarUrl: string }> {
-    return apiClient.post<{ avatarUrl: string }>(
-        "/api/users/avatar",
-        formData
-    );
-}
+        return apiClient.post<{ avatarUrl: string }>(
+            "/api/users/avatar",
+            formData
+        );
+    },
 
-
-
-
+    async removeAvatar(): Promise<{ message: string; avatarUrl: string }> {
+        return apiClient.delete("/api/users/avatar");
+    }
 
 }

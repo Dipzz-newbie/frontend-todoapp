@@ -15,7 +15,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { taskApi } from "@/lib/api/task";
 import { userApi } from "@/lib/api/user";
-import { getAvatarUrl } from "@/lib/avatar";
 
 const Settings: React.FC = () => {
   const {
@@ -87,24 +86,6 @@ const Settings: React.FC = () => {
     }
   };
 
-  const handleRemoveProfilePicture = async () => {
-    try {
-      setSaving(true);
-
-      await userApi.updateCurrentUser({
-        avatarUrl: "",
-      });
-
-      setProfileAvatar("");
-
-      toast.success("Profile picture removed");
-    } catch (error: any) {
-      toast.error(error.message || "Failed to remove profile picture");
-    } finally {
-      setSaving(false);
-    }
-  };
-
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -120,19 +101,32 @@ const Settings: React.FC = () => {
     }
 
     try {
-      if (profileAvatar !== null) {
-        await handleRemoveProfilePicture();
-      }
-
       const formData = new FormData();
       formData.append("avatar", file);
 
       const res = await userApi.uploadAvatar(formData);
+
       setProfileAvatar(res.avatarUrl);
 
       toast.success("Avatar updated!");
     } catch (e: any) {
       toast.error(e.message || "Upload failed");
+    }
+  };
+
+  const handleRemoveProfilePicture = async () => {
+    try {
+      setSaving(true);
+
+      await userApi.removeAvatar();
+
+      setProfileAvatar("");
+
+      toast.success("Profile picture removed");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to remove profile picture");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -199,7 +193,7 @@ const Settings: React.FC = () => {
                 <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-primary shadow-lg">
                   {profileAvatar ? (
                     <img
-                      src={getAvatarUrl(profileAvatar)}
+                      src={profileAvatar}
                       alt="Profile"
                       className="w-full h-full object-cover"
                     />
